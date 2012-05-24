@@ -6,6 +6,7 @@ ep.aceWasEnabled = false;
 ep.isOwner = false;
 ep.readOnly = false;
 ep.timer = null;
+ep.lang = null;
 
 ep.on_disable = function() {
   if (ep.isOwner) {
@@ -87,12 +88,10 @@ ep.on_enable = function() {
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-on').show();
              jQuery('.pad').show();
-             var htext = "PAD f&uuml;r <b>" + ep.config["id"] + "</b> in Revision <b>" + ep.config["rev"]+"</b>";
-             if (!ep.isOwner) {
-               htext = htext + ": <b style='color: red;'>Sie k&ouml;nnen dieses PAD nicht speichern, da die Seite von einem anderen Nutzer gesperrt ist!</b>";
-             } else {
-               htext = htext + ": <b>Sie sind f&uuml;r das Speichern dieses PADs verantwortlich.</b>";
-             }
+             var htext = (ep.isOwner ? ep.lang.padowner : ep.lang.padnoowner);
+             htext = htext.replace(/%s/, ep.config["id"]);
+             htext = htext.replace(/%d/, ep.config["rev"]);
+
              jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.pad'));
              jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
              jQuery("<img/>").addClass("pad-lock").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_lock);
@@ -131,6 +130,7 @@ ep.refresh = function() {
 }
 
 ep.initialize = function() {
+  ep.lang = LANG.plugins.etherpadlite;
   ep.imgBase = ep.config["base"] + "/img/";
   ep.readOnly = (ep.config["act"] == "locked");
   jQuery("<img/>").addClass("pad-toggle pad-toggle-off").attr("src",ep.imgBase+"toggle_off.png").insertAfter(jQuery("#size__ctl")).click(ep.on_enable);

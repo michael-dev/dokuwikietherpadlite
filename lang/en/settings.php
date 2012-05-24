@@ -4,7 +4,6 @@
  */
 
 
-$lang['etherpadlite_url'] = "url of etherpad lite api";
-$lang['etherpadlite_apikey'] = "apikey of etherpad lite";
-$lang['etherpadlite_group'] = "master group of etherpad lite";
-
+$lang['etherpadlite_url'] = "Url of etherpad lite";
+$lang['etherpadlite_apikey'] = "APIKEY of etherpad lite";
+$lang['etherpadlite_group'] = "Alias of etherpad lite group";
