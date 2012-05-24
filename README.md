@@ -15,6 +15,30 @@ will not work!
 Please refer to http://www.dokuwiki.org/plugins for additional info
 on how to install plugins in DokuWiki.
 
+Icons: http://openclipart.org/detail/35197/tango-accesories-text-editor-by-warszawianka (public domain)
+Icons: http://openclipart.org/detail/74881/cerrar-by-nomade
+Icons: http://openclipart.org/detail/22179/lock-by-nicubunu
+
+Please note that password protection only works for group pads. Additionally, there is a single master group for alle wiki pages. So the temporary page id is a secret.
+
+FIXME: Group sessions last for one week or shorter (if user uses logout button). So after one week, you'll need to reconnect.
+
+Etherpad-Lite config:
+  "requireSession" : true,
+  "editOnly" : true,
+  mysql
+
+Etherpad-Lite apache config:
+  RewriteEngine On
+  RewriteRule ^/pad$ /pad/ [R]
+  <Proxy http://localhost:9001/>
+    Order allow,deny
+    Allow from all
+  </Proxy>
+  ProxyPass /pad/ http://localhost:9001/
+  ProxyPassReverse /pad/ http://localhost:9001/
+  ProxyPreserveHost on
+
 ----
 Copyright (C) Michael Braun <michael-dev@fami-braun.de>
 

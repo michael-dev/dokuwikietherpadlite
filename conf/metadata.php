@@ -6,5 +6,6 @@
  */
 
 
-//$meta['fixme'] = array('string');
-
+$meta['etherpadlite_url'] = array('string');
+$meta['etherpadlite_apikey'] = array('string');
+$meta['etherpadlite_group']  = array('string');

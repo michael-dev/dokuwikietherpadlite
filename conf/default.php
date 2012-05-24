@@ -5,4 +5,6 @@
  * @author Michael Braun <michael-dev@fami-braun.de>
  */
 
-//$conf['fixme']    = 'FIXME';
+$conf['etherpadlite_url']    = 'http://beta.etherpad.org';
+$conf['etherpadlite_apikey'] = 'EtherpadFTW';
+$conf['etherpadlite_group']  = 'mydokuwiki';
