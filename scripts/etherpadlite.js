@@ -87,7 +87,13 @@ ep.on_enable = function() {
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-on').show();
              jQuery('.pad').show();
-             jQuery('<div/>').addClass("pad-toolbar").html("PAD").appendTo(jQuery('.pad'));
+             var htext = "PAD f&uuml;r <b>" + ep.config["id"] + "</b> in Revision <b>" + ep.config["rev"]+"</b>";
+             if (!ep.isOwner) {
+               htext = htext + ": <b style='color: red;'>Sie k&ouml;nnen dieses PAD nicht speichern, da die Seite von einem anderen Nutzer gesperrt ist!</b>";
+             } else {
+               htext = htext + ": <b>Sie sind f&uuml;r das Speichern dieses PADs verantwortlich.</b>";
+             }
+             jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.pad'));
              jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
              jQuery("<img/>").addClass("pad-lock").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_lock);
              jQuery('#bodyContent').hide();
