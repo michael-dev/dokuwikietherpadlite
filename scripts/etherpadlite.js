@@ -5,9 +5,11 @@ ep.config = etherpad_lite_config;
 ep.aceWasEnabled = false;
 ep.isOwner = false;
 ep.readOnly = false;
+ep.timer = null;
 
 ep.on_disable = function() {
   if (ep.isOwner) {
+    window.clearInterval(ep.timer); ep.timer = null;
     jQuery.post(
       DOKU_BASE + 'lib/exe/ajax.php',
       { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_close" },
@@ -99,10 +101,28 @@ ep.on_enable = function() {
                      jQuery(".pad-lock").attr("src",ep.imgBase+"nolock.png");
                  }
              }
+             if (ep.isOwner) {
+                 ep.timer = window.setInterval(ep.refresh, 5 * 60 * 1000);
+             }
           }
       }
   );
 };
+
+ep.refresh = function() {
+  jQuery.post(
+      DOKU_BASE + 'lib/exe/ajax.php',
+      { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_getText" },
+      function(data) {
+          if (data.error) {
+             alert(data.error);
+          } else {
+             dw_locktimer.refresh();
+             jQuery('#wiki__text').val(data.text);
+          }
+      }
+    );
+}
 
 ep.initialize = function() {
   ep.imgBase = ep.config["base"] + "/img/";

@@ -105,6 +105,56 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         return Array("hasPassword" => $hasPassword, "canPassword" => $canPassword);
     }
 
+    public function handle_ajax_pad_getText() {
+        global $conf;
+        global $lang;
+        global $ID;
+        global $REV;
+        global $INFO;
+
+        $ID = cleanID($_POST['id']);
+        if(empty($ID)) return;
+        $REV = (int) $_POST["rev"];
+
+        $INFO = pageinfo();
+
+        if (!$INFO['writable']) {
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+        }
+
+        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
+        $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
+
+        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
+        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
+
+        $ep_url = trim($this->getConf('etherpadlite_url'));
+        $ep_key = trim($this->getConf('etherpadlite_apikey'));
+        $ep_group = trim($this->getConf('etherpadlite_group'));
+        $ep_instance = new EtherpadLiteClient($ep_key, $ep_url."/api");
+
+        if (!empty($ep_group)) {
+            try {
+    	        $groupid = $ep_instance->createGroupIfNotExistsFor($ep_group);
+		        $groupid = (string) $groupid->groupID;
+            } catch (Exception $e) {
+                return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
+            }
+            $pageid = $groupid."\$".$meta[$rev]["pageid"];
+        } else {
+            $pageid = $meta[$rev]["pageid"];
+        }
+
+        try {
+            $text = $ep_instance->getText($pageid);
+            $text = (string) $text->text;
+        } catch (Exception $e) {
+            return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "pageid" => $pageid);
+        }
+
+        return Array("status" => "OK", "text" => $text);
+    }
+
     public function handle_ajax_pad_close() {
         global $conf;
         global $lang;
