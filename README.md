@@ -39,6 +39,8 @@ Etherpad-Lite apache config:
   ProxyPassReverse /pad/ http://localhost:9001/
   ProxyPreserveHost on
 
+Usage: Der User who is in "edit"-Mode can create a PAD to edit and save the content. Users in "lock"-Mode can join this PAD, but not save nor delete the PAD.
+
 ----
 Copyright (C) Michael Braun <michael-dev@fami-braun.de>
 
