@@ -68,12 +68,15 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
         }
 
+        $client = $_SERVER['REMOTE_USER'];
+        if(!$client) $client = clientIP(true);
+
         $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
 
         if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
         if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if ($meta[$rev]["owner"] != $_SERVER["REMOTE_USER"]) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
+        if ($meta[$rev]["owner"] != $client) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
 
         $ep_url = trim($this->getConf('etherpadlite_url'));
         $ep_key = trim($this->getConf('etherpadlite_apikey'));
@@ -88,7 +91,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
                 return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
             }
             $pageid = $groupid."\$".$meta[$rev]["pageid"];
-            $canPassword = ($meta[$rev]["owner"] == $_SERVER["REMOTE_USER"]);
+            $canPassword = ($meta[$rev]["owner"] == $client);
         } else {
             $pageid = $meta[$rev]["pageid"];
             $canPassword = false;
@@ -169,15 +172,21 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $INFO = pageinfo();
 
         if (!$INFO['writable']) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied - page not writeable');
         }
+        if(checklock($ID)){
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied - page locked by somebody else');
+        }
+        lock($ID);
 
         $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
+        $client = $_SERVER['REMOTE_USER'];
+        if(!$client) $client = clientIP(true);
 
         if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
         if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if ($meta[$rev]["owner"] != $_SERVER["REMOTE_USER"]) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
+        if ($meta[$rev]["owner"] != $client) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
 
         $ep_url = trim($this->getConf('etherpadlite_url'));
         $ep_key = trim($this->getConf('etherpadlite_apikey'));
@@ -199,6 +208,20 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         try {
             $text = $ep_instance->getText($pageid);
             $text = (string) $text->text;
+            # save as draft before deleting
+            if($conf['usedraft']) {
+              $draft = array('id'     => $ID,
+                'prefix' => substr($_POST['prefix'], 0, -1),
+                'text'   => $text,
+                'suffix' => $_POST['suffix'],
+                'date'   => (int) $_POST['date'],
+                'client' => $client,
+                );
+              $cname = getCacheName($draft['client'].$ID,'.draft');
+              if (!io_saveFile($cname,serialize($draft))) {
+                return Array("file" => __FILE__, "line" => __LINE__, "error" => "pad could not be safed as draft");
+              }
+            }
             $ep_instance->deletePad($pageid);
         } catch (Exception $e) {
             return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "pageid" => $pageid);
@@ -228,6 +251,11 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
         }
 
+        $client = $_SERVER['REMOTE_USER'];
+        if(!$client) $client = clientIP(true);
+        $clientname = $USERINFO["name"];
+        if (empty($clientname)) $clientname = $client;
+
         $ep_url = trim($this->getConf('etherpadlite_url'));
         $ep_key = trim($this->getConf('etherpadlite_apikey'));
         $ep_group = trim($this->getConf('etherpadlite_group'));
@@ -237,7 +265,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 	            $groupid = $ep_instance->createGroupIfNotExistsFor($ep_group);
 		        $groupid = (string) $groupid->groupID;
                 if (!isset($_SESSION["ep_sessionID"])) {
-		            $authorid = $ep_instance->createAuthorIfNotExistsFor($_SERVER['REMOTE_USER'], $USERINFO['name']);
+		            $authorid = $ep_instance->createAuthorIfNotExistsFor($client, $clientname);
 		            $authorid = (string) $authorid->authorID;
 		            $cookies = $ep_instance->createSession($groupid, $authorid, time() + 7 * 24 * 60 * 60);
 		            $sessionID = (string) $cookies->sessionID;
@@ -275,7 +303,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             } catch (Exception $e) {
                 return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
             }
-            $meta[$rev] = Array("pageid" => $pageid, "owner" => $_SERVER['REMOTE_USER']);
+            $meta[$rev] = Array("pageid" => $pageid, "owner" => $client);
             p_set_metadata($ID, Array("etherpadlite" => $meta));
         } else {
             $pageid = $meta[$rev]["pageid"];
@@ -293,7 +321,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $hasPassword = false;
         if (!empty($ep_group)) {
             $pageid = "$groupid\$$pageid";
-            $canPassword = ($meta[$rev]["owner"] == $_SERVER["REMOTE_USER"]);
+            $canPassword = ($meta[$rev]["owner"] == $client);
             try {
                 $hasPassword = (bool) ($ep_instance->isPasswordProtected($pageid)->isPasswordProtected);
             } catch (Exception $e) {
@@ -303,7 +331,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             $canPassword = false;
         }
 
-        $isOwner = ($meta[$rev]["owner"] == $_SERVER["REMOTE_USER"]);
+        $isOwner = ($meta[$rev]["owner"] == $client);
 
         return Array("name" => "$pageid", "url" => $ep_url."/p/".$pageid, "sessionID" => $_SESSION["ep_sessionID"], "hasPassword" => $hasPassword, "canPassword" => $canPassword, "isOwner" => $isOwner);
     }

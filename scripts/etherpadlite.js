@@ -13,7 +13,11 @@ ep.on_disable = function() {
     window.clearInterval(ep.timer); ep.timer = null;
     jQuery.post(
       DOKU_BASE + 'lib/exe/ajax.php',
-      { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_close" },
+      { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_close",
+        "prefix" : jQuery('#dw__editform').find('input[name=prefix]').val(),
+        "suffix" : jQuery('#dw__editform').find('input[name=suffix]').val(),
+        "date" : jQuery('#dw__editform').find('input[name=date]').val()
+      },
       function(data) {
           if (data.error) {
              alert(data.error);
