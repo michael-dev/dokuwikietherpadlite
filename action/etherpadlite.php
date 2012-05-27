@@ -67,11 +67,14 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         if (!$INFO['writable']) {
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
         }
+        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
+        if ($rev == 0) {
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+        }
 
         $client = $_SERVER['REMOTE_USER'];
         if(!$client) $client = clientIP(true);
 
-        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
 
         if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
@@ -124,8 +127,11 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         if (!$INFO['writable']) {
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
         }
-
         $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
+        if ($rev == 0) {
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+        }
+
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
 
         if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
@@ -174,12 +180,15 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         if (!$INFO['writable']) {
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied - page not writeable');
         }
+        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
+        if ($rev == 0) {
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+        }
         if(checklock($ID)){
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied - page locked by somebody else');
         }
         lock($ID);
 
-        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
         $client = $_SERVER['REMOTE_USER'];
         if(!$client) $client = clientIP(true);
@@ -250,6 +259,10 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         if (!$INFO['writable']) {
            return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
         }
+        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
+        if ($rev == 0) {
+           return array("file" => __FILE__, "line" => __LINE__, "error" => 'You need to create (save) the wiki page first.');
+        }
 
         $client = $_SERVER['REMOTE_USER'];
         if(!$client) $client = clientIP(true);
@@ -278,7 +291,6 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 	        }
         }
 
-        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
         if (!is_array($meta)) $meta = Array();
         if (!isset($meta[$rev])) {
