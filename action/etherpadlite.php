@@ -249,6 +249,8 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
           $_POST["readMode"] = $_POST["encAMode"];
         }
 
+        $this->renameCurrentPage();
+
         $password = $_POST["encpw"];
         if ($password != "***") {
           if ($password == "") $password = NULL;
@@ -276,7 +278,6 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $meta[$rev]["encMode"] = $_POST["encMode"];
         $meta[$rev]["encAMode"] = $_POST["encAMode"];
         $meta[$rev]["readMode"] = $_POST["readMode"];
-        $this->renameCurrentPage();
 
         return $this->getPageInfo();
     }
