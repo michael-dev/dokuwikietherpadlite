@@ -22,6 +22,7 @@ Icons: http://openclipart.org/detail/22179/lock-by-nicubunu
 Please note that password protection only works for group pads. Additionally, there is a single master group for alle wiki pages. So the temporary page id is a secret.
 
 FIXME: Group sessions last for one week or shorter (if user uses logout button). So after one week, you'll need to reconnect.
+Note: Encrypted pages are not really encrypted but the etherpad-lite builtin password manager is used.
 
 Etherpad-Lite config:
   "requireSession" : true,
