@@ -24,278 +24,323 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_logoutconvenience');
     }
 
+    private function createEPInstance() {
+        if (isset($this->instance)) return;
+        $this->ep_url = trim($this->getConf('etherpadlite_url'));
+        $ep_key = trim($this->getConf('etherpadlite_apikey'));
+        $this->ep_instance = new EtherpadLiteClient($ep_key, $this->ep_url."/api");
+        $this->ep_group = trim($this->getConf('etherpadlite_group'));
+    	$this->groupid = $this->ep_instance->createGroupIfNotExistsFor($this->ep_group);
+        $this->groupid = (string) $this->groupid->groupID;
+        return;
+    }
+
+    private function getPageID() {
+      global $meta, $rev;
+      assert(is_array($meta[$rev]));
+      if (!empty($this->ep_group)) {
+        return $this->groupid."\$".$meta[$rev]["pageid"];
+      } else {
+        return $meta[$rev]["pageid"];
+      }
+    }
+
+    private function renameCurrentPage() {
+      global $meta, $rev, $ID, $pageid;
+
+      assert(is_array($meta[$rev]));
+      $pageid = $this->getPageID();
+
+      $text = $this->ep_instance->getText($pageid);
+      $text = (string) $text->text;
+
+      $newpageid = md5(uniqid("dokuwiki:".md5($ID).":$rev:", true));
+      if (!empty($this->ep_group)) {
+        $this->ep_instance->createGroupPad($this->groupid, $newpageid, $text);
+      } else {
+        $this->ep_instance->createPad($newpageid, $text);
+      }
+      $this->ep_instance->deletePad($pageid);
+
+      $meta[$rev]["pageid"] = $newpageid;
+      $pageid = $this->getPageID();
+    }
+
     public function handle_logoutconvenience(&$event,$param) {
         global $ACT;
         if ($ACT=='logout' && isset($_SESSION["ep_sessionID"])) {
-             $ep_url = trim($this->getConf('etherpadlite_url'));
-             $ep_key = trim($this->getConf('etherpadlite_apikey'));
-             $ep_group = trim($this->getConf('etherpadlite_group'));
-             $ep_instance = new EtherpadLiteClient($ep_key, $ep_url."/api");
-             if (!empty($ep_group)) {
-                 $ep_instance->deleteSession($_SESSION["ep_sessionID"]);
+             $this->createEPInstance();
+             if (!empty($this->ep_group)) {
+                 $this->ep_instance->deleteSession($_SESSION["ep_sessionID"]);
                  unset($_SESSION["ep_sessionID"]);
              }
         }
     }
 
     public function handle_ajax(&$event, $param) {
+        if (class_exists("action_plugin_ipgroup")) {
+          $plugin = new action_plugin_ipgroup();
+          $plugin->start($event, $param);
+        }
+
         $call = $event->data;
         if(method_exists($this, "handle_ajax_$call")) {
            $json = new JSON();
 
            header('Content-Type: application/json');
-           print $json->encode($this->{"handle_ajax_$call"}());
+           try {
+             $ret = $this->handle_ajax_inner($call);
+           } catch (Exception $e) {
+             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
+           }
+           print $json->encode($ret);
            $event->preventDefault();
         }
     }
 
-    public function handle_ajax_pad_setpassword() {
-        global $conf;
-        global $lang;
-        global $ID;
-        global $REV;
-        global $INFO;
+    private function handle_ajax_inner($call) {
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid, $USERINFO;
+        $this->createEPInstance();
+
+
+        $this->client = $_SERVER['REMOTE_USER'];
+        if(!$this->client) $this->client = clientIP(true);
+        $this->clientname = $USERINFO["name"];
+        if (empty($this->clientname)) $this->clientname = $this->client;
 
         $ID = cleanID($_POST['id']);
         if(empty($ID)) return;
-        $REV = (int) $_POST["rev"];
-        $password = $_POST["password"];
-        if (empty($password)) $password = NULL;
-
-        $INFO = pageinfo();
-
-        if (!$INFO['writable']) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+        if (auth_quickaclcheck($ID) < AUTH_READ) {
+          return array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang('Permission denied'));
         }
+
+        $REV = (int) $_POST["rev"];
+        $INFO = pageinfo();
         $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
         if ($rev == 0) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
+          return array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang('You need to create (save) the non-empty page first.'));
         }
 
-        $client = $_SERVER['REMOTE_USER'];
-        if(!$client) $client = clientIP(true);
-
         $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
+        $oldmeta = $meta;
+        if (!is_array($meta)) $meta = Array();
 
-        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if ($meta[$rev]["owner"] != $client) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-
-        $ep_url = trim($this->getConf('etherpadlite_url'));
-        $ep_key = trim($this->getConf('etherpadlite_apikey'));
-        $ep_group = trim($this->getConf('etherpadlite_group'));
-        $ep_instance = new EtherpadLiteClient($ep_key, $ep_url."/api");
-
-        if (!empty($ep_group)) {
-            try {
-    	        $groupid = $ep_instance->createGroupIfNotExistsFor($ep_group);
-		        $groupid = (string) $groupid->groupID;
-            } catch (Exception $e) {
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
-            }
-            $pageid = $groupid."\$".$meta[$rev]["pageid"];
-            $canPassword = ($meta[$rev]["owner"] == $client);
+        if (isset($meta[$rev])) {
+          $pageid = $this->getPageID();
         } else {
-            $pageid = $meta[$rev]["pageid"];
+          $pageid = NULL;
+        }
+
+        if (isset($_POST["isSaveable"])) {
+          $_POST["isSaveable"] = ($_POST["isSaveable"] == "true");
+        } else {
+          $_POST["isSaveable"] = false;
+        }
+
+        if (!isset($_POST["accessPassword"])) {
+          $_POST["accessPassword"] = "";
+        }
+
+        if (isset($_POST["readOnly"])) {
+          $_POST["readOnly"] = ($_POST["readOnly"] == "true");
+        }
+
+        if (isset($meta[$rev]) && ($meta[$rev]["owner"] != $this->client)) {
+          # PAD exists and is not owned by us
+          $canWrite = ((!isset($meta[$rev]["writepw"]) || ($meta[$rev]["writepw"] == (string) $_POST["accessPassword"]))
+                      && $INFO['writable']);
+          $canRead = (((($meta[$rev]["readMode"] == "wikiread") || $INFO['writable'])
+                      && (!isset($meta[$rev]["readpw"]) || $meta[$rev]["readpw"] == (string) $_POST["accessPassword"])
+                      ) || $canWrite);
+        } else { # no such pad or pad alread owned by me
+          $canWrite = $_POST["isSaveable"] && $INFO['writable'];
+          $canRead  = $INFO['writable'];
+          $_POST["readOnly"] = false;
+        }
+
+        # default to write-access request if pad not exists, otherwise prefer write-access over readonly-access
+        if (!isset($_POST["readOnly"])) {
+          if ($pageid !== NULL) {
+            $_POST["readOnly"] = !$canWrite;
+          } else {
+            $_POST["readOnly"] = false;
+          }
+        }
+        # the master editor is always editable
+        $_POST["readOnly"] = $_POST["readOnly"] && !$_POST["isSaveable"];
+        if ((!$canWrite) && (!$canRead || (!$_POST["readOnly"]))) {
+          return array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang('Permission denied'), "askPassword" => (isset($meta[$rev]["readpw"]) || isset($meta[$rev]["writepw"])));
+        }
+
+        if($_POST["isSaveable"] && checklock($ID)) {
+          return array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang('Permission denied - page locked by somebody else'));
+        }
+        if ($_POST["isSaveable"]) {
+          lock($ID);
+        }
+        $ret = $this->{"handle_ajax_$call"}();
+        if ($meta != $oldmeta)
+          p_set_metadata($ID, Array("etherpadlite" => $meta));
+        return $ret;
+    }
+
+    private function getPageInfo() {
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid;
+        if (!empty($this->ep_group)) {
+            $canPassword = ($meta[$rev]["owner"] == $this->client);
+        } else {
             $canPassword = false;
         }
 
-        $hasPassword = false;
-        try {
-            $ep_instance->setPassword($pageid, $password);
-            $hasPassword = (bool) ($ep_instance->isPasswordProtected($pageid)->isPasswordProtected);
-        } catch (Exception $e) {
-            return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
+        $hasPassword = (bool) ($this->ep_instance->isPasswordProtected($pageid)->isPasswordProtected);
+        $ret = Array("hasPassword" => $hasPassword, "canPassword" => $canPassword, "encpw" => ($hasPassword ? "***" : ""));
+        $ret["encMode"] = $meta[$rev]["encMode"];
+        $ret["encAMode"] = $meta[$rev]["encAMode"];
+        $ret["readMode"] = $meta[$rev]["readMode"];
+        $ret["writeMode"] = "wikiwrite";
+
+        if (isset($meta[$rev]["readpw"])) {
+          $ret["readpw"] = "***";
+          $ret["readMode"] .= "+password";
+        } else
+          $ret["readpw"] = "";
+
+        if (isset($meta[$rev]["writepw"])) {
+          $ret["writepw"] = "***";
+          $ret["writeMode"] .= "+password";
+        } else
+          $ret["writepw"] = "";
+
+        $ret["name"] = "$pageid";
+
+        if ($_POST['readOnly']) {
+          $roid = (string) $this->ep_instance->getReadOnlyID($pageid)->readOnlyID;
+          $ret["url"] = $this->ep_url."/ro/".$roid;
+        } else {
+          $ret["url"] = $this->ep_url."/p/".$pageid;
         }
 
-        return Array("hasPassword" => $hasPassword, "canPassword" => $canPassword);
+        $isOwner = ($meta[$rev]["owner"] == $this->client);
+        $ret["isOwner"] = $isOwner;
+
+        $ret["isReadonly"] = $_POST["readOnly"];
+
+        return $ret;
+    }
+
+    public function handle_ajax_pad_security() {
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid;
+
+        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
+        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
+        if ($meta[$rev]["owner"] != $this->client) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
+
+        if ($_POST["encMode"] == "noenc") {
+          $_POST["encpw"] = "";
+          if (strpos($_POST["readMode"],"password") === false)
+            $_POST["readpw"] = "";
+          if (strpos($_POST["writeMode"],"password") === false)
+            $_POST["writepw"] = "";
+          $_POST["readMode"] = str_replace("+password","",$_POST["readMode"]);
+        } else {
+          $_POST["encMode"] = "enc";
+          $_POST["readpw"] = "";
+          $_POST["writepw"] = "";
+          $_POST["readMode"] = $_POST["encAMode"];
+        }
+
+        $password = $_POST["encpw"];
+        if ($password != "***") {
+          if ($password == "") $password = NULL;
+          $this->ep_instance->setPassword($pageid, $password);
+        }
+
+        $password = $_POST["readpw"];
+        if ($password != "***") {
+          if ($password == "") {
+            unset($meta[$rev]["readpw"]);
+          } else {
+            $meta[$rev]["readpw"] = $password;
+          }
+        }
+
+        $password = $_POST["writepw"];
+        if ($password != "***") {
+          if ($password == "") {
+            unset($meta[$rev]["writepw"]);
+          } else {
+            $meta[$rev]["writepw"] = $password;
+          }
+        }
+
+        $meta[$rev]["encMode"] = $_POST["encMode"];
+        $meta[$rev]["encAMode"] = $_POST["encAMode"];
+        $meta[$rev]["readMode"] = $_POST["readMode"];
+        $this->renameCurrentPage();
+
+        return $this->getPageInfo();
     }
 
     public function handle_ajax_pad_getText() {
-        global $conf;
-        global $lang;
-        global $ID;
-        global $REV;
-        global $INFO;
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid;
 
-        $ID = cleanID($_POST['id']);
-        if(empty($ID)) return;
-        $REV = (int) $_POST["rev"];
+        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
+        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
 
-        $INFO = pageinfo();
-
-        if (!$INFO['writable']) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
-        }
-        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
-        if ($rev == 0) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
-        }
-
-        $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
-
-        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-
-        $ep_url = trim($this->getConf('etherpadlite_url'));
-        $ep_key = trim($this->getConf('etherpadlite_apikey'));
-        $ep_group = trim($this->getConf('etherpadlite_group'));
-        $ep_instance = new EtherpadLiteClient($ep_key, $ep_url."/api");
-
-        if (!empty($ep_group)) {
-            try {
-    	        $groupid = $ep_instance->createGroupIfNotExistsFor($ep_group);
-		        $groupid = (string) $groupid->groupID;
-            } catch (Exception $e) {
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
-            }
-            $pageid = $groupid."\$".$meta[$rev]["pageid"];
-        } else {
-            $pageid = $meta[$rev]["pageid"];
-        }
-
-        try {
-            $text = $ep_instance->getText($pageid);
-            $text = (string) $text->text;
-        } catch (Exception $e) {
-            return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "pageid" => $pageid);
-        }
+        $text = $this->ep_instance->getText($pageid);
+        $text = (string) $text->text;
 
         return Array("status" => "OK", "text" => $text);
     }
 
     public function handle_ajax_pad_close() {
-        global $conf;
-        global $lang;
-        global $ID;
-        global $REV;
-        global $INFO;
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid;
 
-        $ID = cleanID($_POST['id']);
-        if(empty($ID)) return;
-        $REV = (int) $_POST["rev"];
+        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("Permission denied"));
+        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("Permission denied"));
+        if ($meta[$rev]["owner"] != $this->client) return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("Permission denied"));
 
-        $INFO = pageinfo();
-
-        if (!$INFO['writable']) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied - page not writeable');
+        $text = $this->ep_instance->getText($pageid);
+        $text = (string) $text->text;
+        # save as draft before deleting
+        if($conf['usedraft']) {
+          $draft = array('id'     => $ID,
+            'prefix' => substr($_POST['prefix'], 0, -1),
+            'text'   => $text,
+            'suffix' => $_POST['suffix'],
+            'date'   => (int) $_POST['date'],
+            'client' => $this->client,
+            );
+          $cname = getCacheName($draft['client'].$ID,'.draft');
+          if (!io_saveFile($cname,serialize($draft))) {
+            return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("pad could not be safed as draft"));
+          }
         }
-        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
-        if ($rev == 0) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
-        }
-        if(checklock($ID)){
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied - page locked by somebody else');
-        }
-        lock($ID);
-
-        $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
-        $client = $_SERVER['REMOTE_USER'];
-        if(!$client) $client = clientIP(true);
-
-        if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-        if ($meta[$rev]["owner"] != $client) return Array("file" => __FILE__, "line" => __LINE__, "error" => "Permission denied");
-
-        $ep_url = trim($this->getConf('etherpadlite_url'));
-        $ep_key = trim($this->getConf('etherpadlite_apikey'));
-        $ep_group = trim($this->getConf('etherpadlite_group'));
-        $ep_instance = new EtherpadLiteClient($ep_key, $ep_url."/api");
-
-        if (!empty($ep_group)) {
-            try {
-    	        $groupid = $ep_instance->createGroupIfNotExistsFor($ep_group);
-		        $groupid = (string) $groupid->groupID;
-            } catch (Exception $e) {
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
-            }
-            $pageid = $groupid."\$".$meta[$rev]["pageid"];
-        } else {
-            $pageid = $meta[$rev]["pageid"];
-        }
-
-        try {
-            $text = $ep_instance->getText($pageid);
-            $text = (string) $text->text;
-            # save as draft before deleting
-            if($conf['usedraft']) {
-              $draft = array('id'     => $ID,
-                'prefix' => substr($_POST['prefix'], 0, -1),
-                'text'   => $text,
-                'suffix' => $_POST['suffix'],
-                'date'   => (int) $_POST['date'],
-                'client' => $client,
-                );
-              $cname = getCacheName($draft['client'].$ID,'.draft');
-              if (!io_saveFile($cname,serialize($draft))) {
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => "pad could not be safed as draft");
-              }
-            }
-            $ep_instance->deletePad($pageid);
-        } catch (Exception $e) {
-            return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "pageid" => $pageid);
-        }
+        $this->ep_instance->deletePad($pageid);
 
         unset($meta[$rev]);
-        p_set_metadata($ID, Array("etherpadlite" => $meta));
 
         return Array("status" => "OK", "text" => $text);
     }
 
     public function handle_ajax_pad_open() {
-        global $conf;
-        global $lang;
-        global $ID;
-        global $REV;
-        global $INFO;
-        global $USERINFO;
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid, $USERINFO;
 
-        $ID = cleanID($_POST['id']);
-        if(empty($ID)) return;
-        $REV = (int) $_POST["rev"];
-        $readOnly = ($_POST['readOnly'] == 'true');
-        $INFO = pageinfo();
-
-        if (!$INFO['writable']) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'Permission denied');
-        }
-        $rev = (int) (($INFO['rev'] == '') ? $INFO['lastmod'] : $INFO['rev']);
-        if ($rev == 0) {
-           return array("file" => __FILE__, "line" => __LINE__, "error" => 'You need to create (save) the wiki page first.');
+        if (!empty($this->ep_group)) {
+          if (!isset($_SESSION["ep_sessionID"])) {
+            $authorid = $this->ep_instance->createAuthorIfNotExistsFor($this->client, $this->clientname);
+            $authorid = (string) $authorid->authorID;
+            $cookies = $this->ep_instance->createSession($this->groupid, $authorid, time() + 7 * 24 * 60 * 60);
+            $sessionID = (string) $cookies->sessionID;
+            $host = parse_url($this->ep_url, PHP_URL_HOST);
+            $_SESSION["ep_sessionID"] = $sessionID;
+          }
+          setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $host);
         }
 
-        $client = $_SERVER['REMOTE_USER'];
-        if(!$client) $client = clientIP(true);
-        $clientname = $USERINFO["name"];
-        if (empty($clientname)) $clientname = $client;
-
-        $ep_url = trim($this->getConf('etherpadlite_url'));
-        $ep_key = trim($this->getConf('etherpadlite_apikey'));
-        $ep_group = trim($this->getConf('etherpadlite_group'));
-        $ep_instance = new EtherpadLiteClient($ep_key, $ep_url."/api");
-        if (!empty($ep_group)) {
-	        try {
-	            $groupid = $ep_instance->createGroupIfNotExistsFor($ep_group);
-		        $groupid = (string) $groupid->groupID;
-                if (!isset($_SESSION["ep_sessionID"])) {
-		            $authorid = $ep_instance->createAuthorIfNotExistsFor($client, $clientname);
-		            $authorid = (string) $authorid->authorID;
-		            $cookies = $ep_instance->createSession($groupid, $authorid, time() + 7 * 24 * 60 * 60);
-		            $sessionID = (string) $cookies->sessionID;
-		            $host = parse_url($ep_url, PHP_URL_HOST);
-		            $_SESSION["ep_sessionID"] = $sessionID;
-                }
-		        setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $host);
-	        } catch (Exception $e) {
-	            return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
-	        }
-        }
-
-        $meta = p_get_metadata($ID, "etherpadlite", METADATA_DONT_RENDER);
-        if (!is_array($meta)) $meta = Array();
         if (!isset($meta[$rev])) {
-            if ($readOnly)
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => "There is no such pad.");
+            if (!$_POST['isSaveable'] || $_POST["readOnly"])
+                return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("There is no such pad."));
             /** new pad */
             if (isset($_POST["text"])) {
                 $text = $_POST["text"];
@@ -306,46 +351,36 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
                 }
             }
             $pageid = md5(uniqid("dokuwiki:".md5($ID).":$rev:", true));
-            try {
-                if (!empty($ep_group)) {
-                    $ep_instance->createGroupPad($groupid, $pageid, $text);
-                } else {
-                    $ep_instance->createPad($pageid, $text);
-                }
-            } catch (Exception $e) {
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
+            if (!empty($this->ep_group)) {
+                $this->ep_instance->createGroupPad($this->groupid, $pageid, $text);
+            } else {
+                $this->ep_instance->createPad($pageid, $text);
             }
-            $meta[$rev] = Array("pageid" => $pageid, "owner" => $client);
-            p_set_metadata($ID, Array("etherpadlite" => $meta));
+            $meta[$rev] = Array();
+            $meta[$rev]["pageid"] = $pageid;
+            $meta[$rev]["owner"] = $this->client;
+            $meta[$rev]["encMode"] = "noenc";
+            $meta[$rev]["encAMode"] = "wikiwrite";
+            $meta[$rev]["readMode"] = "wikiwrite";
+
         } else {
             $pageid = $meta[$rev]["pageid"];
-            /* in case pad is already deleted, recreate it */
+            /* in case pad is already deleted, recreate it. Should not happen, but this resolves this kind of conflict. */
             try {
-                if (!empty($ep_group)) {
-                    $ep_instance->createGroupPad($groupid, $pageid, "");
+                if (!empty($this->ep_group)) {
+                    $this->ep_instance->createGroupPad($this->groupid, $pageid, "");
                 } else {
-                    $ep_instance->createPad($pageid, "");
+                    $this->ep_instance->createPad($pageid, "");
                 }
             } catch (Exception $e) {
             }
         }
+        $pageid = $this->getPageID();
 
-        $hasPassword = false;
-        if (!empty($ep_group)) {
-            $pageid = "$groupid\$$pageid";
-            $canPassword = ($meta[$rev]["owner"] == $client);
-            try {
-                $hasPassword = (bool) ($ep_instance->isPasswordProtected($pageid)->isPasswordProtected);
-            } catch (Exception $e) {
-                return Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
-            }
-        } else {
-            $canPassword = false;
-        }
+        $ret = $this->getPageInfo();
+        $ret = array_merge($ret, Array("sessionID" => $_SESSION["ep_sessionID"]));
 
-        $isOwner = ($meta[$rev]["owner"] == $client);
-
-        return Array("name" => "$pageid", "url" => $ep_url."/p/".$pageid, "sessionID" => $_SESSION["ep_sessionID"], "hasPassword" => $hasPassword, "canPassword" => $canPassword, "isOwner" => $isOwner);
+        return $ret;
     }
 
     public function handle_tpl_metaheader_output(Doku_Event &$event, $param) {
