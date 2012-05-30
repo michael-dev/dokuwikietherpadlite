@@ -225,14 +225,7 @@ ep.refresh = function() {
              alert(data.error);
           } else {
              jQuery('#wiki__text').val(data.text);
-             jQuery('.pad-toggle').hide();
-             jQuery('.pad-toggle-off').show();
-             jQuery('.pad').html("");
-             jQuery('.pad').hide();
-             jQuery('#bodyContent').show();
-             if (ep.aceWasEnabled) {
-                jQuery('img.ace-toggle[src*="off"]:visible').click();
-             }
+             dw_locktimer.refresh();
           }
       }
     );
