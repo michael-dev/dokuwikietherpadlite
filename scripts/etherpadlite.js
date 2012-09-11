@@ -12,16 +12,9 @@ ep.password = "";
 
 ep.on_disable = function() {
   if (ep.isOwner) {
-    window.clearInterval(ep.timer); ep.timer = null;
-    jQuery.post(
+  jQuery.post(
       DOKU_BASE + 'lib/exe/ajax.php',
-      { "id"         : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_close",
-        "prefix"     : jQuery('#dw__editform').find('input[name=prefix]').val(),
-        "suffix"     : jQuery('#dw__editform').find('input[name=suffix]').val(),
-        "date"       : jQuery('#dw__editform').find('input[name=date]').val(),
-        "isSaveable" : ep.isSaveable,
-        "readOnly"   : false
-      },
+      { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_getText", "isSaveable" : ep.isSaveable, "readOnly"   : false },
       function(data) {
           if (data.error) {
              alert(data.error);
@@ -32,9 +25,7 @@ ep.on_disable = function() {
              jQuery('.pad').html("");
              jQuery('.pad').hide();
              jQuery('#bodyContent').show();
-             if (ep.aceWasEnabled) {
-                jQuery('img.ace-toggle[src*="off"]:visible').click();
-             }
+             ep.on_disable_close();
           }
       }
     );
@@ -48,6 +39,30 @@ ep.on_disable = function() {
         jQuery('img.ace-toggle[src*="off"]:visible').click();
      }
   }
+};
+
+ep.on_disable_close = function() {
+  window.clearInterval(ep.timer); ep.timer = null;
+  jQuery.post(
+    DOKU_BASE + 'lib/exe/ajax.php',
+    { "id"         : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_close",
+      "prefix"     : jQuery('#dw__editform').find('input[name=prefix]').val(),
+      "suffix"     : jQuery('#dw__editform').find('input[name=suffix]').val(),
+      "date"       : jQuery('#dw__editform').find('input[name=date]').val(),
+      "isSaveable" : ep.isSaveable,
+      "readOnly"   : false
+    },
+    function(data) {
+        if (data.error) {
+           alert(data.error);
+        } else {
+           jQuery('#wiki__text').val(data.text);
+           if (ep.aceWasEnabled) {
+              jQuery('img.ace-toggle[src*="off"]:visible').click();
+           }
+        }
+    }
+  );
 };
 
 ep.on_password_cancel = function(event) {
@@ -225,7 +240,9 @@ ep.refresh = function() {
              alert(data.error);
           } else {
              jQuery('#wiki__text').val(data.text);
-             dw_locktimer.refresh();
+             if (dw_locktimer) {
+               dw_locktimer.refresh();
+             }
           }
       }
     );

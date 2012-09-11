@@ -317,7 +317,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("pad could not be safed as draft"));
           }
         }
-        //$this->ep_instance->deletePad($pageid);
+        $this->ep_instance->deletePad($pageid);
 
         unset($meta[$rev]);
 
