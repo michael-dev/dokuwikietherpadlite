@@ -22,8 +22,8 @@ ep.on_disable = function() {
              jQuery('#wiki__text').val(data.text);
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-off').show();
-             jQuery('.pad').html("");
-             jQuery('.pad').hide();
+             jQuery('.etherpad').html("");
+             jQuery('.etherpad').hide();
              jQuery('#bodyContent').show();
              ep.on_disable_close();
           }
@@ -32,8 +32,8 @@ ep.on_disable = function() {
   } else {
      jQuery('.pad-toggle').hide();
      jQuery('.pad-toggle-off').show();
-     jQuery('.pad').html("");
-     jQuery('.pad').hide();
+     jQuery('.etherpad').html("");
+     jQuery('.etherpad').hide();
      jQuery('#bodyContent').show();
      if (ep.aceWasEnabled) {
         jQuery('img.ace-toggle[src*="off"]:visible').click();
@@ -183,7 +183,7 @@ ep.on_security_submit = function() {
       } else {
         ep.security_fill(data);
         ep.dlg.dlg.dialog('close');
-        jQuery('.pad iframe').attr("src",data.url);
+        jQuery('.etherpad iframe').attr("src",data.url);
       }
     }
   );
@@ -312,18 +312,18 @@ ep.on_re_enable = function(reopen) {
              document.cookie="sessionID="+data.sessionID+";domain=stura.tu-ilmenau.de;path=/";
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-on').show();
-             jQuery('.pad').html("");
-             jQuery('.pad').show();
+             jQuery('.etherpad').html("");
+             jQuery('.etherpad').show();
              var htext = (ep.isOwner ? ep.lang.padowner : ep.lang.padnoowner);
              htext = htext.replace(/%s/, ep.config["id"]);
              htext = htext.replace(/%d/, ep.config["rev"]);
 
-             jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.pad'));
+             jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.etherpad'));
              jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
              jQuery("<img/>").addClass("pad-security").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_security);
              jQuery("<img/>").addClass("pad-saveable").attr("src",ep.imgBase+"no-saveable.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_password_click);
              jQuery('#bodyContent').hide();
-             jQuery('<iframe/>').attr("src",data.url).appendTo(jQuery('.pad'));
+             jQuery('<iframe/>').attr("src",data.url).appendTo(jQuery('.etherpad'));
              ep.security_fill(data);
              if (ep.isOwner) {
                  ep.timer = window.setInterval(ep.refresh, 5 * 60 * 1000);
@@ -339,10 +339,10 @@ ep.initialize = function() {
   ep.isSaveable = (ep.config["act"] != "locked");
   jQuery("<img/>").addClass("pad-toggle pad-toggle-off").attr("src",ep.imgBase+"toggle_off.png").insertAfter(jQuery("#size__ctl")).click(ep.on_enable);
   jQuery("<img/>").addClass("pad-toggle pad-toggle-on").attr("src",ep.imgBase+"toggle_on.png").insertAfter(jQuery("#size__ctl")).click(ep.on_disable);
-  jQuery("<div/>").addClass("pad").insertAfter(jQuery("#bodyContent"));
+  jQuery("<div/>").addClass("etherpad").insertAfter(jQuery("#bodyContent"));
   jQuery('.pad-toggle').hide();
   jQuery('.pad-toggle-off').show();
-  jQuery('.pad').hide();
+  jQuery('.etherpad').hide();
   ep.init_security();
   ep.init_password();
 };
