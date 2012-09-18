@@ -318,7 +318,11 @@ ep.on_re_enable = function(reopen) {
              htext = htext.replace(/%s/, ep.config["id"]);
              htext = htext.replace(/%d/, ep.config["rev"]);
 
-             jQuery('<div/>').addClass("pad-resizable").appendTo(jQuery('.etherpad'));
+             h = screen.height - 500;
+	     if (h < 300) {
+	       h = 300;
+	     }
+             jQuery('<div/>').addClass("pad-resizable").css('height',h).appendTo(jQuery('.etherpad'));
              jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.pad-resizable'));
              jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
              jQuery("<img/>").addClass("pad-security").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_security);
