@@ -183,7 +183,7 @@ ep.on_security_submit = function() {
       } else {
         ep.security_fill(data);
         ep.dlg.dlg.dialog('close');
-        jQuery('.etherpad iframe').attr("src",data.url);
+        jQuery('.pad-iframe').attr("src",data.url);
       }
     }
   );
@@ -313,17 +313,20 @@ ep.on_re_enable = function(reopen) {
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-on').show();
              jQuery('.etherpad').html("");
-             jQuery('.etherpad').show();
+	     jQuery('.etherpad').show();
              var htext = (ep.isOwner ? ep.lang.padowner : ep.lang.padnoowner);
              htext = htext.replace(/%s/, ep.config["id"]);
              htext = htext.replace(/%d/, ep.config["rev"]);
 
-             jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.etherpad'));
+             jQuery('<div/>').addClass("pad-resizable").appendTo(jQuery('.etherpad'));
+             jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.pad-resizable'));
              jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
              jQuery("<img/>").addClass("pad-security").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_security);
              jQuery("<img/>").addClass("pad-saveable").attr("src",ep.imgBase+"no-saveable.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_password_click);
              jQuery('#bodyContent').hide();
-             jQuery('<iframe/>').attr("src",data.url).appendTo(jQuery('.etherpad'));
+             jQuery('<div/>').addClass("pad-iframecontainer").appendTo(jQuery('.pad-resizable'));
+             jQuery('<iframe/>').addClass("pad-iframe").attr("src",data.url).appendTo(jQuery('.pad-iframecontainer'));
+	     jQuery('.pad-resizable').resizable();
              ep.security_fill(data);
              if (ep.isOwner) {
                  ep.timer = window.setInterval(ep.refresh, 5 * 60 * 1000);
