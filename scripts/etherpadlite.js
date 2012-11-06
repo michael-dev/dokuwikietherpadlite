@@ -352,6 +352,20 @@ ep.initialize = function() {
   jQuery('.etherpad').hide();
   ep.init_security();
   ep.init_password();
+  if (!ep.isSaveable) {
+    jQuery.post(
+      DOKU_BASE + 'lib/exe/ajax.php',
+      { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "has_pad",
+        "isSaveable" : ep.isSaveable, "accessPassword" : ep.password },
+      function(data) {
+          if (data.error) {
+            alert(data.error);
+          } else if (data.exists) {
+            ep.on_enable();
+          }
+      }
+    );
+  }
 };
 
 jQuery(document).ready(ep.initialize);

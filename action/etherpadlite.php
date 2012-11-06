@@ -324,6 +324,12 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         return Array("status" => "OK", "text" => $text);
     }
 
+    public function handle_ajax_has_pad() {
+        global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid, $USERINFO;
+
+        return Array("exists" => isset($meta[$rev]));
+    }
+
     public function handle_ajax_pad_open() {
         global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid, $USERINFO;
 
