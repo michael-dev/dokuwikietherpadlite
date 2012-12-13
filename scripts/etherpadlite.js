@@ -353,6 +353,7 @@ ep.initialize = function() {
   ep.init_security();
   ep.init_password();
   // check if pad exists -> open it
+  if (ep.config["rev"] !== false && ep.config["rev"] > 0) {
     jQuery.post(
       DOKU_BASE + 'lib/exe/ajax.php',
       { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "has_pad",
@@ -365,6 +366,7 @@ ep.initialize = function() {
           }
       }
     );
+  }
 };
 
 jQuery(document).ready(ep.initialize);
