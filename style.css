@@ -14,34 +14,15 @@
     display: inline;
 }
 
-.etherpad {
-    position: static;
-    margin-top: 60px;
-    margin-left: 20px;
-    margin-right: 20px;
-    margin-bottom: 0px;
-    padding-bottom: 20px;
-}
-
 .pad-toolbar {
     min-height: 20px;
-    border-bottom: thin solid black;
-    padding-left: 20px;
+    display: block;
 }
 
 .pad-resizable {
     position: relative;
     border: thin solid black;
-    border-radius: 20px 20px 0px 0px;
-    box-shadow: 0px 3px 10px rgb(85, 85, 85);
     height: 600px;
-}
-
-.pad-iframecontainer {
-    width: 100%;
-    position: absolute;
-    top: 20px;
-    bottom: 0px;
 }
 
 .pad-iframe {
@@ -49,3 +30,4 @@
     height: 100%;
     border: hidden;
 }
+

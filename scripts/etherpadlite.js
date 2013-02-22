@@ -9,6 +9,8 @@ ep.isSaveable = false;
 ep.timer = null;
 ep.lang = null;
 ep.password = "";
+ep.opened = false;
+ep.hasPadPlugin = false;
 
 ep.on_disable = function() {
   if (ep.isOwner) {
@@ -20,11 +22,20 @@ ep.on_disable = function() {
              alert(data.error);
           } else {
              jQuery('#wiki__text').val(data.text);
+             self.textChanged = true;
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-off').show();
-             jQuery('.etherpad').html("");
-             jQuery('.etherpad').hide();
-             jQuery('#bodyContent').show();
+             jQuery('.pad-iframecontainer').html("");
+             jQuery('.pad-iframecontainer').hide();
+             jQuery('#wiki__text').show();
+             jQuery(".pad-action-buttons").hide();
+             jQuery(".nopad-action-buttons").show();
+             jQuery('.ace-toggle-hidden').removeClass('ace-toggle-hidden').show();
+             if (!ep.isSaveable) { // fix toolbar
+               jQuery('#wiki__text').attr('readOnly','readOnly');
+               jQery('tool__bar').empty();
+             }
+             ep.opened = false;
              ep.on_disable_close();
           }
       }
@@ -32,9 +43,17 @@ ep.on_disable = function() {
   } else {
      jQuery('.pad-toggle').hide();
      jQuery('.pad-toggle-off').show();
-     jQuery('.etherpad').html("");
-     jQuery('.etherpad').hide();
-     jQuery('#bodyContent').show();
+     jQuery('.pad-iframecontainer').html("");
+     jQuery('.pad-iframecontainer').hide();
+     jQuery('#wiki__text').show();
+     jQuery(".pad-action-buttons").hide();
+     jQuery(".nopad-action-buttons").show();
+     jQuery('.ace-toggle-hidden').removeClass('ace-toggle-hidden').show();
+     if (!ep.isSaveable) { // fix toolbar
+       jQuery('#wiki__text').attr('readOnly','readOnly');
+       jQuery('#tool__bar').empty();
+     }
+     ep.opened = false;
      if (ep.aceWasEnabled) {
         jQuery('img.ace-toggle[src*="off"]:visible').click();
      }
@@ -57,6 +76,7 @@ ep.on_disable_close = function() {
            alert(data.error);
         } else {
            jQuery('#wiki__text').val(data.text);
+           self.textChanged = true;
            if (ep.aceWasEnabled) {
               jQuery('img.ace-toggle[src*="off"]:visible').click();
            }
@@ -293,8 +313,6 @@ ep.on_re_enable = function(reopen) {
       jQuery('img.ace-toggle[src*="on"]:visible').click();
       text = jQuery('#wiki__text').val();
   }
-  /* set cookie domain for wiki.stura + box.stura */
-  document.domain = "stura.tu-ilmenau.de";
   /* commit */
   jQuery.post(
       DOKU_BASE + 'lib/exe/ajax.php',
@@ -309,28 +327,30 @@ ep.on_re_enable = function(reopen) {
              }
           } else {
              ep.isOwner = data.isOwner;
+             ep.opened = true;
              document.cookie="sessionID="+data.sessionID+";domain=stura.tu-ilmenau.de;path=/";
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-on').show();
-             jQuery('.etherpad').html("");
-	     jQuery('.etherpad').show();
              var htext = (ep.isOwner ? ep.lang.padowner : ep.lang.padnoowner);
              htext = htext.replace(/%s/, ep.config["id"]);
              htext = htext.replace(/%d/, ep.config["rev"]);
+             jQuery('.pad-toolbar span').html(htext);
 
              h = screen.height - 500;
 	     if (h < 300) {
 	       h = 300;
 	     }
-             jQuery('<div/>').addClass("pad-resizable").css('height',h).appendTo(jQuery('.etherpad'));
-             jQuery('<div/>').addClass("pad-toolbar").html(htext).appendTo(jQuery('.pad-resizable'));
-             jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
-             jQuery("<img/>").addClass("pad-security").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_security);
-             jQuery("<img/>").addClass("pad-saveable").attr("src",ep.imgBase+"no-saveable.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_password_click);
-             jQuery('#bodyContent').hide();
-             jQuery('<div/>').addClass("pad-iframecontainer").appendTo(jQuery('.pad-resizable'));
+             jQuery('#wiki__text').hide();
+             jQuery(".pad-action-buttons").show();
+             jQuery(".nopad-action-buttons").hide();
+             jQuery('.ace-toggle:visible').addClass('ace-toggle-hidden').hide();
+             jQuery('.pad-iframecontainer').empty();
              jQuery('<iframe/>').addClass("pad-iframe").attr("src",data.url).appendTo(jQuery('.pad-iframecontainer'));
 	     jQuery('.pad-resizable').resizable();
+             if (!ep.isSaveable) { // fix toolbar
+               jQuery('#wiki__text').removeAttr('readOnly');
+               initToolbar('tool__bar','wiki__text',toolbar);
+             }
              ep.security_fill(data);
              if (ep.isOwner) {
                  ep.timer = window.setInterval(ep.refresh, 5 * 60 * 1000);
@@ -340,16 +360,172 @@ ep.on_re_enable = function(reopen) {
   );
 };
 
+/* textselection / toolbar wrapper */
+ep.setSelection = self.setSelection;
+ep.getSelection = self.getSelection;
+ep.pasteText = self.pasteText;
+ep.insertTags = self.insertTags;
+ep.insertAtCarret = self.insertAtCarret;
+ep.tb_formatln = self.tb_formatln;
+ep.insertLink = dw_linkwiz.insertLink;
+
+ep.sendMessage = function(func, data) {
+  if (ep.hasPadPlugin) {
+    var msg = new Object();
+    msg.func = func;
+    msg.data = data;
+    jQuery('iframe.pad-iframe')[0].contentWindow.postMessage(msg, "*");
+  } else {
+    alert(ep.lang.missingPlugin);
+  }
+}
+
+self.getSelection = function(textArea) {
+  if (ep.opened) {
+    alert(ep.lang.noGetSelection);
+  } else {
+    return ep.getSelection(textArea);
+  }
+};
+
+self.setSelection = function(selection) {
+  if (ep.opened) {
+    alert(ep.lang.noSetSelection);
+  } else {
+    return ep.setSelection(selection);
+  }
+}
+
+self.pasteText = function (selection,text,opts) {
+  if (ep.opened) {
+    alert(ep.lang.noPasteText);
+  } else {
+    return ep.pasteText(selection,text,opts);
+  }
+} 
+
+// needed
+self.insertTags = function(textAreaID, tagOpen, tagClose, sampleText) {
+  if (ep.opened) {
+    ep.sendMessage('insertTags', {'tagOpen': tagOpen, 'tagClose' : tagClose, 'sampleText' : sampleText, 'trimSpaces' : false});
+  } else {
+    return ep.insertTags(textAreaID, tagOpen, tagClose, sampleText);
+  }
+}
+
+// needed
+self.insertAtCarret = function(textAreaID, text) {
+  if (ep.opened) {
+    ep.sendMessage('insert', {'text': text});
+  } else {
+    return ep.insertAtCarret(textAreaID);
+  }
+}
+
+// needed
+self.tb_formatln = function(btn, props, edid) {
+  if (ep.opened) {
+    var sample = props.title || props.sample;
+
+    sample = fixtxt(sample);
+    props.open  = fixtxt(props.open);
+    props.close = fixtxt(props.close);
+
+    ep.sendMessage('insertTagsLn', {'tagOpen': props.open, 'tagClose' : props.close, 'sampleText' : sample});
+
+    pickerClose();
+    return false;
+  } else {
+    return ep.tb_formatln(btn, props, edid);
+  }
+}
+
+// needed
+dw_linkwiz.insertLink = function(title) {
+  if (ep.opened) {
+    var link = dw_linkwiz.$entry.val();
+    if(!link) {
+      return;
+    }
+    if(dw_linkwiz.textArea.form.id.value.indexOf(':') != -1 &&
+       link.indexOf(':') == -1){
+      link = ':' + link;
+    }
+    ep.sendMessage('insertTags', {'tagOpen': '[['+link+'|', 'tagClose' : ']]', 'sampleText' : title, 'trimSpaces' : true});
+    dw_linkwiz.hide();
+    dw_linkwiz.$entry.val(dw_linkwiz.$entry.val().replace(/[^:]*$/, ''));
+  } else {
+    return ep.insertLink(title);
+  }
+}
+
+ep.onSave = function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (ep.opened) {
+    if (confirm("Das Pad muss zunächst geschlossen werden, bevor die Seite gespeichert werden kann.\nSoll das Pad geschlossen werden?")) {
+      ep.on_disable(event);
+    }
+    return false;
+  } else {
+    return jQuery('#edbtn__save').click();
+  }
+}
+
+ep.onPreview = function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (ep.opened) {
+    alert(ep.lang.noPreview);
+    return false;
+  } else {
+    return jQuery('#edbtn__preview').click();
+  }
+}
+
+ep.onCancel = function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (ep.opened) {
+    if (confirm("Das Pad muss zunächst geschlossen werden, bevor das Bearbeiten der Seite abgebrochen werden kann.\nSoll das Pad geschlossen werden?")) {
+      ep.on_disable(event);
+    }
+    return false;
+  } else {
+    return jQuery('#edbtn__cancel').click();
+  }
+}
+
+/* init */
+
 ep.initialize = function() {
   ep.lang = LANG.plugins.etherpadlite;
   ep.imgBase = ep.config["base"] + "/img/";
   ep.isSaveable = (ep.config["act"] != "locked");
   jQuery("<img/>").addClass("pad-toggle pad-toggle-off").attr("src",ep.imgBase+"toggle_off.png").insertAfter(jQuery("#size__ctl")).click(ep.on_enable);
   jQuery("<img/>").addClass("pad-toggle pad-toggle-on").attr("src",ep.imgBase+"toggle_on.png").insertAfter(jQuery("#size__ctl")).click(ep.on_disable);
-  jQuery("<div/>").addClass("etherpad").insertAfter(jQuery("#bodyContent"));
+  jQuery("#edbtn__save").clone().attr('id','edbtn__save2').insertAfter('#edbtn__save').click(ep.onSave);
+  jQuery("#edbtn__save").addClass("nopad-action-buttons");
+  jQuery("#edbtn__save2").addClass("pad-action-buttons");
+  jQuery("#edbtn__save2").css("background-image", jQuery("#edbtn__save").css("background-image"));
+  jQuery("#edbtn__preview").clone().attr('id','edbtn__preview2').insertAfter('#edbtn__preview').click(ep.onPreview);
+  jQuery("#edbtn__preview").addClass("nopad-action-buttons");
+  jQuery("#edbtn__preview2").addClass("pad-action-buttons");
+  jQuery("#edbtn__preview2").css("background-image", jQuery("#edbtn__preview").css("background-image"));
+  jQuery('input.button[type="submit"][name="do[draftdel]"]').attr('id','edbtn__cancel');
+  jQuery('#edbtn__cancel').clone().attr('id','edbtn__cancel2').insertAfter('#edbtn__cancel').click(ep.onCancel);
+  jQuery("#edbtn__cancel").addClass("nopad-action-buttons");
+  jQuery("#edbtn__cancel2").addClass("pad-action-buttons");
+  jQuery("#edbtn__cancel2").css("background-image", jQuery("#edbtn__cancel").css("background-image"));
   jQuery('.pad-toggle').hide();
   jQuery('.pad-toggle-off').show();
-  jQuery('.etherpad').hide();
+  jQuery('<div/>').addClass("pad-iframecontainer pad-action-buttons pad-resizable").insertAfter(jQuery('#wiki__text'));
+  jQuery('<div/>').addClass("pad-toolbar pad-action-buttons").insertAfter(jQuery('.toolbar'));
+  jQuery("<span/>").appendTo(jQuery(".pad-toolbar"));
+  jQuery("<img/>").addClass("pad-close").attr("src",ep.imgBase+"close.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_disable);
+  jQuery("<img/>").addClass("pad-security").attr("src",ep.imgBase+"nolock.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_security);
+  jQuery("<img/>").addClass("pad-saveable").attr("src",ep.imgBase+"no-saveable.png").appendTo(jQuery(".pad-toolbar")).click(ep.on_password_click);
+  jQuery(".pad-action-buttons").hide();
   ep.init_security();
   ep.init_password();
   // check if pad exists -> open it
@@ -370,3 +546,22 @@ ep.initialize = function() {
 };
 
 jQuery(document).ready(ep.initialize);
+
+ep.iframeinsertReceiveMessage = function(event) {
+  if (typeof(event.data) != 'object') {
+    return;
+  }
+  var data = event.data;
+  if (data.func == 'none' && data.context == 'ep_iframeinsert') {
+    ep.hasPadPlugin = true;
+    if (ep.opened) {
+      jQuery('#wiki__text').val(data.text);
+      self.textChanged = true;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
+window.addEventListener("message", ep.iframeinsertReceiveMessage, false);
+

@@ -91,7 +91,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
            try {
              $ret = $this->handle_ajax_inner($call);
            } catch (Exception $e) {
-             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage());
+             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "trace" => $e->getTraceAsString(), "url" => $this->ep_url);
            }
            print $json->encode($ret);
            $event->preventDefault();
@@ -155,7 +155,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         } else { # no such pad or pad alread owned by me
           $canWrite = $_POST["isSaveable"] && $INFO['writable'];
           $canRead  = $INFO['writable'];
-          $_POST["readOnly"] = false;
+          $_POST["readOnly"] = !$canWrite;
         }
 
         # default to write-access request if pad not exists, otherwise prefer write-access over readonly-access
@@ -168,10 +168,13 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         }
         # the master editor is always editable
         $_POST["readOnly"] = $_POST["readOnly"] && !$_POST["isSaveable"];
+        # check if pad is owned by somebody else than how can save it (wikilock)
+        if (isset($meta[$rev]) && ($meta[$rev]["owner"] != $this->client) && $_POST["isSaveable"]) {
+          return array("file" => __FILE__, "line" => __LINE__, "error" => sprintf($this->getLang('Permission denied - pad is owned by %s, who needs to lock (edit) the page.'), $meta[$rev]["owner"]));
+        }
         if ((!$canWrite) && (!$canRead || (!$_POST["readOnly"]))) {
           return array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang('Permission denied'), "askPassword" => (isset($meta[$rev]["readpw"]) || isset($meta[$rev]["writepw"])));
         }
-
         if($_POST["isSaveable"] && checklock($ID)) {
           return array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang('Permission denied - page locked by somebody else'));
         }
@@ -392,7 +395,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 
     public function handle_tpl_metaheader_output(Doku_Event &$event, $param) {
         global $ACT, $INFO;
-
+        $this->include_script($event, 'document.domain = "'.$this->getConf('etherpadlite_domain').'";');
         if (!in_array($ACT, array('edit', 'create', 'preview',
                                   'locked', 'draft', 'recover'))) {
             return;
