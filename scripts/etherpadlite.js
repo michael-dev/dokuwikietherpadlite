@@ -397,6 +397,8 @@ self.setSelection = function(selection) {
 }
 
 self.pasteText = function (selection,text,opts) {
+  if (typeof(text) == 'undefined') return;
+
   if (ep.opened) {
     alert(ep.lang.noPasteText);
   } else {
