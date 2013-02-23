@@ -420,7 +420,7 @@ self.insertAtCarret = function(textAreaID, text) {
   if (ep.opened) {
     ep.sendMessage('insert', {'text': text});
   } else {
-    return ep.insertAtCarret(textAreaID);
+    return ep.insertAtCarret(textAreaID, text);
   }
 }
 
