@@ -234,6 +234,10 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
     public function handle_ajax_pad_security() {
         global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid;
 
+        if(!checkSecurityToken()) {
+          return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("CSRF protection."));
+        }
+
         if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
         if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
         if ($meta[$rev]["owner"] != $this->client) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
@@ -300,6 +304,10 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
     public function handle_ajax_pad_close() {
         global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid;
 
+        if(!checkSecurityToken()) {
+          return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("CSRF protection."));
+        }
+
         if (!is_array($meta)) return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("Permission denied"));
         if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("Permission denied"));
         if ($meta[$rev]["owner"] != $this->client) return Array("file" => __FILE__, "line" => __LINE__, 'error' => $this->getLang("Permission denied"));
@@ -335,6 +343,10 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 
     public function handle_ajax_pad_open() {
         global $conf, $ID, $REV, $INFO, $rev, $meta, $pageid, $USERINFO;
+
+        if(!checkSecurityToken()) {
+          return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("CSRF protection."));
+        }
 
         if (!empty($this->ep_group)) {
           if (!isset($_SESSION["ep_sessionID"])) {

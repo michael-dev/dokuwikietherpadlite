@@ -65,6 +65,7 @@ ep.on_disable_close = function() {
   jQuery.post(
     DOKU_BASE + 'lib/exe/ajax.php',
     { "id"         : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_close",
+      "sectok"     : jQuery('input[name=sectok]').val(),
       "prefix"     : jQuery('#dw__editform').find('input[name=prefix]').val(),
       "suffix"     : jQuery('#dw__editform').find('input[name=suffix]').val(),
       "date"       : jQuery('#dw__editform').find('input[name=date]').val(),
@@ -187,6 +188,7 @@ ep.on_security_submit = function() {
   jQuery.post(
     DOKU_BASE + 'lib/exe/ajax.php',
     { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_security",
+      "sectok"     : jQuery('input[name=sectok]').val(),
       "encMode"    : ep.dlg.encMode.val(),
       "encAMode"   : ep.dlg.encAMode.val(),
       "readMode"   : ep.dlg.readMode.val(),
@@ -317,6 +319,7 @@ ep.on_re_enable = function(reopen) {
   jQuery.post(
       DOKU_BASE + 'lib/exe/ajax.php',
       { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_open", "text" : text,
+        'sectok' : jQuery('input[name=sectok]').val(),
         "isSaveable" : ep.isSaveable, "accessPassword" : ep.password },
       function(data) {
           if (data.error) {
