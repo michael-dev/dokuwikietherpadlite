@@ -310,9 +310,9 @@ ep.on_re_enable = function(reopen) {
     /* disable ACE, cache it => text is in wiki__text, ace can be restored. */
     ep.aceWasEnabled = (jQuery('img.ace-toggle[src*="on"]:visible').length > 0);
   }
+  jQuery('img.ace-toggle[src*="on"]:visible').click();
   var text = "";
   if (ep.isSaveable) {
-      jQuery('img.ace-toggle[src*="on"]:visible').click();
       text = jQuery('#wiki__text').val();
   }
   /* commit */
