@@ -409,7 +409,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         global $ACT, $INFO;
         $this->include_script($event, 'document.domain = "'.$this->getConf('etherpadlite_domain').'";');
         if (!in_array($ACT, array('edit', 'create', 'preview',
-                                  'locked', 'draft', 'recover'))) {
+                                  'locked', 'recover'))) {
             return;
         }
         $config = array(
