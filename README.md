@@ -64,6 +64,8 @@ will not work!
 Please refer to http://www.dokuwiki.org/plugins for additional info
 on how to install plugins in DokuWiki.
 
+This plugin needs configuration. See the dokuwiki configuration editor for this.
+
 ### etherpad lite plugin ###
 
 For better integration, see the ep\_iframeinsert etherpad lite plugin.
