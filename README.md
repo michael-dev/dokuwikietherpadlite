@@ -67,7 +67,7 @@ on how to install plugins in DokuWiki.
 ### etherpad lite plugin ###
 
 For better integration, see the ep\_iframeinsert etherpad lite plugin.
-https://github.com/michael-dev/ep%5Fiframeinsert
+https://github.com/michael-dev/ep_iframeinsert
 
 Shortcomings
 ------------
