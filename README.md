@@ -3,7 +3,7 @@ dokuwikietherpadlite
 
 Etherpad-Lite plugin for dokuwiki
 
-All documentation for this plugin can be found at https://github.com/michael-dev/dokuwikietherpadlite
+All documentation for this plugin can be found at https://github.com/michael-dev/dokuwikietherpadlite and at https://www.dokuwiki.org/plugin:etherpadlite .
 
 What does it do?
 ----------------
@@ -77,6 +77,7 @@ Shortcomings
 * Group sessions last for one week or shorter (if user uses logout button). So after one week, you'll need to reconnect.
 * Encrypted pages are not really encrypted but the etherpad-lite builtin password manager is used.
 * Pads are owned by the user who created it. Ownership cannot be transfered. If a pad exists for a page revision, there cannot be another pad for the same/a different page revision.
+* the dokuwiki integration depends on the template used and is not tested with the most recent dokuwiki default template.
 
 Licence
 -----------
