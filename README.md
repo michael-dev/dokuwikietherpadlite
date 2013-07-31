@@ -69,7 +69,7 @@ git clone --recursive https://github.com/michael-dev/dokuwikietherpadlite lib/pl
 
 ## automatic installation ##
 
-Sorry, but I cannot provide a download including submodules on github yet.
+Use https://github.com/michael-dev/dokuwikietherpadlite/blob/releases/dokuwiki-etherpadlite-current.zip to install the plugin using the dokuwiki plugin manager.
 
 ## configuration ##
 
