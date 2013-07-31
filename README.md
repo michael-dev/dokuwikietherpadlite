@@ -31,7 +31,7 @@ The dokuwiki plugin adds javascript code to the edit page that hooks into the to
 
 The etherpad lite gets its pads assigned to groups, group membership managed and pad passwords assigned by the dokuwiki plugin. Further, the dokuwiki plugin sets browser cookies to authorize the client to use the pad. The latter leads to some cross-domain requirements, though this could as well be fixed by adding extra code to etherpad lite.
 
-The tight integration works using javascript cross-domain message posting, so it is more or less cross-domain independend. The dokuwiki plugin sends edit-messages (i.e. past text xx at current cursor) and the etherpad lite plugin receives and processes it. Therefore the etherpad lite plugin is just some javascript code loaded into the browser. Messages in the inverse directions are used to indicate the presenc of the plugin. Please note that there currently is no synchronous messaging possible, so the dokuwiki javascript code cannot read the current selection from the pad.
+The tight integration works using javascript cross-domain message posting, so it is more or less cross-domain independend. The dokuwiki plugin sends edit-messages (i.e. past text xx at current cursor) and the etherpad lite plugin receives and processes it. Therefore the etherpad lite plugin is just some javascript code loaded into the browser. Messages in the inverse directions are used to indicate the presence of the plugin. Please note that there currently is no synchronous messaging possible, so the dokuwiki javascript code cannot read the current selection from the pad.
 
 Installation
 ------------
@@ -57,14 +57,26 @@ To ensure pad permissions and cleanup, I recommend the following etherpad lite s
 
 ### dokuwiki plugin ###
 
-If you install this plugin manually, make sure it is installed in
-lib/plugins/etherpadlite/ - if the folder is called different it
-will not work!
-
 Please refer to http://www.dokuwiki.org/plugins for additional info
 on how to install plugins in DokuWiki.
 
+## manual installation ##
+
+Use the following command to install the plugin into dokuwiki. The path name (etherpadlite in the lib/plugins folder) is important - a different name will not work!
+```
+git clone --recursive https://github.com/michael-dev/dokuwikietherpadlite lib/plugins/etherpadlite
+```
+
+## automatic installation ##
+
+Sorry, but I cannot provide a download including submodules on github yet.
+
+## configuration ##
+
 This plugin needs configuration. See the dokuwiki configuration editor for this.
+Especially you will need to configure:
+* the address of your own etherpad lite instance
+* the APIKEY. It is created by your etherpad lite instance on its first start and written to the APIKEY.txt file. Copy and paste the files content into the dokuwiki plugin config.
 
 ### etherpad lite plugin ###
 
