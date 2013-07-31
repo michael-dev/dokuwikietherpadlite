@@ -73,10 +73,7 @@ Sorry, but I cannot provide a download including submodules on github yet.
 
 ## configuration ##
 
-This plugin needs configuration. See the dokuwiki configuration editor for this.
-Especially you will need to configure:
-* the address of your own etherpad lite instance
-* the APIKEY. It is created by your etherpad lite instance on its first start and written to the APIKEY.txt file. Copy and paste the files content into the dokuwiki plugin config.
+This plugin needs configuration. See the dokuwiki configuration editor for this. More information can be found on https://www.dokuwiki.org/plugin:etherpadlite .
 
 ### etherpad lite plugin ###
 
