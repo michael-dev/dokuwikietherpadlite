@@ -349,6 +349,11 @@ ep.on_re_enable = function(reopen) {
   }
   ep.aceHide();
   ep.cmHide();
+
+  self.setTimeout(ep.on_re_enable_cont, 500);
+}
+
+ep.on_re_enable_cont = function() {
   var text = "";
   if (ep.isSaveable) {
       text = jQuery('#wiki__text').val();
