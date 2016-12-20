@@ -28,8 +28,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         if (isset($this->instance)) return;
         $this->ep_url = trim($this->getConf('etherpadlite_url'));
         $ep_key = trim($this->getConf('etherpadlite_apikey'));
-        $ca = trim($this->getConf('etherpadlite_ca'));
-        $this->ep_instance = new EtherpadLiteClient($ep_key, $this->ep_url."/api", $ca);
+        $this->ep_instance = new EtherpadLiteClient($ep_key, $this->ep_url."/api");
         $this->ep_group = trim($this->getConf('etherpadlite_group'));
     	$this->groupid = $this->ep_instance->createGroupIfNotExistsFor($this->ep_group);
         $this->groupid = (string) $this->groupid->groupID;
@@ -92,7 +91,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
            try {
              $ret = $this->handle_ajax_inner($call);
            } catch (Exception $e) {
-             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => "Server-Fehler (Pad-Plugin): ".$e->getMessage(), "trace" => $e->getTraceAsString(), "url" => $this->ep_url);
+             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "trace" => $e->getTraceAsString(), "url" => $this->ep_url);
            }
            print $json->encode($ret);
            $event->preventDefault();

@@ -10,4 +10,3 @@ $meta['etherpadlite_url'] = array('string');
 $meta['etherpadlite_apikey'] = array('string');
 $meta['etherpadlite_group']  = array('string');
 $meta['etherpadlite_domain']  = array('string');
-$meta['etherpadlite_ca']  = array('string');
