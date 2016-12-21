@@ -18,7 +18,7 @@ require_once DOKU_PLUGIN.'etherpadlite/externals/etherpad-lite-client/etherpad-l
 
 class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 
-    public function register(Doku_Event_Handler &$controller) {
+    public function register(Doku_Event_Handler $controller) {
         $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handle_tpl_metaheader_output');
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
         $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_logoutconvenience');
