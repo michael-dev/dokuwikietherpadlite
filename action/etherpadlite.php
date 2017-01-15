@@ -357,6 +357,8 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             $sessionID = (string) $cookies->sessionID;
             $_SESSION["ep_sessionID"] = $sessionID;
           }
+          $host = parse_url($this->ep_url, PHP_URL_HOST);
+          setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $host);
           setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $this->getConf('etherpadlite_domain'));
         }
 
