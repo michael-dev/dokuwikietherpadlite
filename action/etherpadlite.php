@@ -358,7 +358,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             $host = parse_url($this->ep_url, PHP_URL_HOST);
             $_SESSION["ep_sessionID"] = $sessionID;
           }
-          setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $host);
+          setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $this->getConf('etherpadlite_domain'));
         }
 
         if (!isset($meta[$rev])) {
@@ -401,7 +401,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $pageid = $this->getPageID();
 
         $ret = $this->getPageInfo();
-        $ret = array_merge($ret, Array("sessionID" => $_SESSION["ep_sessionID"]));
+        $ret = array_merge($ret, Array("sessionID" => $_SESSION["ep_sessionID"], "domain" => $this->getConf('etherpadlite_domain')));
 
         return $ret;
     }

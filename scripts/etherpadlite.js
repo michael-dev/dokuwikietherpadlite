@@ -374,7 +374,7 @@ ep.on_re_enable_cont = function() {
           } else {
              ep.isOwner = data.isOwner;
              ep.opened = true;
-             document.cookie="sessionID="+data.sessionID+";domain=stura.tu-ilmenau.de;path=/";
+             document.cookie="sessionID="+data.sessionID+";domain="+data.domain+";path=/";
              jQuery('.pad-toggle').hide();
              jQuery('.pad-toggle-on').show();
              var htext = (ep.isOwner ? ep.lang.padowner : ep.lang.padnoowner);
