@@ -18,7 +18,7 @@ require_once DOKU_PLUGIN.'etherpadlite/externals/etherpad-lite-client/etherpad-l
 
 class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 
-    public function register(Doku_Event_Handler &$controller) {
+    public function register(Doku_Event_Handler $controller) {
         $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handle_tpl_metaheader_output');
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
         $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_logoutconvenience');
@@ -354,10 +354,11 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             $authorid = (string) $authorid->authorID;
             $cookies = $this->ep_instance->createSession($this->groupid, $authorid, time() + 7 * 24 * 60 * 60);
             $sessionID = (string) $cookies->sessionID;
-            $host = parse_url($this->ep_url, PHP_URL_HOST);
             $_SESSION["ep_sessionID"] = $sessionID;
           }
+          $host = parse_url($this->ep_url, PHP_URL_HOST);
           setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $host);
+          setcookie("sessionID",$_SESSION["ep_sessionID"], 0, "/", $this->getConf('etherpadlite_domain'));
         }
 
         if (!isset($meta[$rev])) {
@@ -400,7 +401,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $pageid = $this->getPageID();
 
         $ret = $this->getPageInfo();
-        $ret = array_merge($ret, Array("sessionID" => $_SESSION["ep_sessionID"]));
+        $ret = array_merge($ret, Array("sessionID" => $_SESSION["ep_sessionID"], "domain" => $this->getConf('etherpadlite_domain')));
 
         return $ret;
     }
