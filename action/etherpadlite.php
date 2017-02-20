@@ -91,7 +91,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
            try {
              $ret = $this->handle_ajax_inner($call);
            } catch (Exception $e) {
-             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => $e->getMessage(), "trace" => $e->getTraceAsString(), "url" => $this->ep_url);
+             $ret = Array("file" => __FILE__, "line" => __LINE__, "error" => "Server-Fehler (Pad-Plugin): ".$e->getMessage(), "trace" => $e->getTraceAsString(), "url" => $this->ep_url);
            }
            print $json->encode($ret);
            $event->preventDefault();
