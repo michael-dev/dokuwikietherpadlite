@@ -386,6 +386,9 @@ ep.on_re_enable_cont = function() {
 	           if (h < 300) {
                h = 300;
              }
+             if (jQuery('#wiki__text').length == 0) {
+               console.log("Missing Wiki Text Field");
+             }
              jQuery('#wiki__text').hide();
              jQuery(".pad-action-buttons").show();
              jQuery(".nopad-action-buttons").hide();
@@ -568,6 +571,9 @@ ep.initialize = function() {
   ep.lang = LANG.plugins.etherpadlite;
   ep.imgBase = ep.config["base"] + "/img/";
   ep.isSaveable = (ep.config["act"] != "locked");
+  if (jQuery("#size__ctl").length == 0) {
+    console.log("Missing #size__ctl");
+  }
   jQuery("<img/>").addClass("pad-toggle pad-toggle-off").attr("src",ep.imgBase+"toggle_off.png").insertAfter(jQuery("#size__ctl")).click(ep.on_enable);
   jQuery("<img/>").addClass("pad-toggle pad-toggle-on").attr("src",ep.imgBase+"toggle_on.png").insertAfter(jQuery("#size__ctl")).click(ep.on_disable);
   jQuery("#edbtn__save").clone().attr('id','edbtn__save2').insertAfter('#edbtn__save').click(ep.onSave);
@@ -604,6 +610,7 @@ ep.initialize = function() {
           if (data.error) {
             alert(data.error);
           } else if (data.exists) {
+            console.log("auto-start pad");
             ep.on_enable();
           }
       }
