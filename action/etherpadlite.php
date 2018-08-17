@@ -30,6 +30,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $ep_key = trim($this->getConf('etherpadlite_apikey'));
         $this->ep_instance = new EtherpadLiteClient($ep_key, $this->ep_url."/api");
         $this->ep_group = trim($this->getConf('etherpadlite_group'));
+        $this->ep_url_args = trim($this->getConf('etherpadlite_urlargs'));
     	$this->groupid = $this->ep_instance->createGroupIfNotExistsFor($this->ep_group);
         $this->groupid = (string) $this->groupid->groupID;
         return;
@@ -222,6 +223,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         } else {
           $ret["url"] = $this->ep_url."/p/".$pageid;
         }
+        $ret["url"] .= "?".$this->ep_url_args;
 
         $isOwner = ($meta[$rev]["owner"] == $this->client);
         $ret["isOwner"] = $isOwner;

@@ -8,3 +8,4 @@ $lang['etherpadlite_url'] = "Url of etherpad lite";
 $lang['etherpadlite_apikey'] = "APIKEY of etherpad lite";
 $lang['etherpadlite_group'] = "Alias of etherpad lite group";
 $lang['etherpadlite_domain'] = "shared cookie-domain for etherpad lite";
+$lang['etherpadlite_urlargs'] = "Url query string of etherpad lite for iframe";
