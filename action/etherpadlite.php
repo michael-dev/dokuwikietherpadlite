@@ -33,7 +33,7 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         $this->ep_url_args = trim($this->getConf('etherpadlite_urlargs'));
         $this->groupid = $this->ep_instance->createGroupIfNotExistsFor($this->ep_group);
         $this->groupid = (string) $this->groupid->groupID;
-        $this->domain => trim($this->getConf('etherpadlite_domain'));
+        $this->domain = trim($this->getConf('etherpadlite_domain'));
         if ($this->domain == "")
           $this->domain = $_SERVER["HTTP_HOST"];
         return;
