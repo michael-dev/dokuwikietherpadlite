@@ -1,7 +1,7 @@
 base   etherpadlite
 author Michael Braun
 email  michael-dev@fami-braun.de
-date   2017-02-20
+date   2018-08-17
 name   etherpadlite plugin
 desc   Edit using Etherpad-Lite
 url    https://github.com/michael-dev/dokuwikietherpadlite
