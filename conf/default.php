@@ -8,5 +8,5 @@
 $conf['etherpadlite_url']    = 'https://video.etherpad.org';
 $conf['etherpadlite_apikey'] = 'EtherpadFTW';
 $conf['etherpadlite_group']  = 'mydokuwiki';
-$conf['etherpadlite_domain'] = 'cookie.domain.org';
+$conf['etherpadlite_domain'] = '';
 $conf['etherpadlite_urlargs'] = '';
