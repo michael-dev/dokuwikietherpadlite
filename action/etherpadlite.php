@@ -19,21 +19,21 @@ require_once DOKU_PLUGIN.'etherpadlite/externals/etherpad-lite-client/etherpad-l
 class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
 
     public function register(Doku_Event_Handler $controller) {
-        $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handle_tpl_metaheader_output');
-        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
-        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_logoutconvenience');
+      $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'handle_tpl_metaheader_output');
+      $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax');
+      $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_logoutconvenience');
     }
 
     private function createEPInstance() {
-        if (isset($this->instance)) return;
-        $this->ep_url = trim($this->getConf('etherpadlite_url'));
-        $ep_key = trim($this->getConf('etherpadlite_apikey'));
-        $this->ep_instance = new EtherpadLiteClient($ep_key, $this->ep_url."/api");
-        $this->ep_group = trim($this->getConf('etherpadlite_group'));
-        $this->ep_url_args = trim($this->getConf('etherpadlite_urlargs'));
-    	$this->groupid = $this->ep_instance->createGroupIfNotExistsFor($this->ep_group);
-        $this->groupid = (string) $this->groupid->groupID;
-        return;
+      if (isset($this->instance)) return;
+      $this->ep_url = rtrim(trim($this->getConf('etherpadlite_url')),"/");
+      $ep_key = trim($this->getConf('etherpadlite_apikey'));
+      $this->ep_instance = new EtherpadLiteClient($ep_key, $this->ep_url."/api");
+      $this->ep_group = trim($this->getConf('etherpadlite_group'));
+      $this->ep_url_args = trim($this->getConf('etherpadlite_urlargs'));
+      $this->groupid = $this->ep_instance->createGroupIfNotExistsFor($this->ep_group);
+      $this->groupid = (string) $this->groupid->groupID;
+      return;
     }
 
     private function getPageID() {
