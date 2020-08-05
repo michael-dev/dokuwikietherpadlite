@@ -5,7 +5,7 @@
  * @author Michael Braun <michael-dev@fami-braun.de>
  */
 
-$conf['etherpadlite_url']    = 'https://video.etherpad.org';
+$conf['etherpadlite_url']    = 'https://video.etherpad.com';
 $conf['etherpadlite_apikey'] = 'EtherpadFTW';
 $conf['etherpadlite_group']  = 'mydokuwiki';
 $conf['etherpadlite_domain'] = '';
