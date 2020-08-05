@@ -409,17 +409,6 @@ ep.on_re_enable_cont = function() {
   );
 };
 
-/* textselection / toolbar wrapper */
-ep.setSelection = self.setSelection;
-ep.getSelection = self.getSelection;
-ep.DWsetSelection = self.DWsetSelection;
-ep.DWgetSelection = self.DWgetSelection;
-ep.pasteText = self.pasteText;
-ep.insertTags = self.insertTags;
-ep.insertAtCarret = self.insertAtCarret;
-ep.tb_formatln = self.tb_formatln;
-ep.insertLink = dw_linkwiz.insertLink;
-
 ep.sendMessage = function(func, data) {
   if (ep.hasPadPlugin) {
     var msg = new Object();
@@ -431,7 +420,7 @@ ep.sendMessage = function(func, data) {
   }
 }
 
-self.getSelection = function(textArea) {
+ep.proxyGetSelection = function(textArea) {
   if (ep.opened) {
     alert(ep.lang.noGetSelection);
   } else {
@@ -439,7 +428,7 @@ self.getSelection = function(textArea) {
   }
 };
 
-self.setSelection = function(selection) {
+ep.proxySetSelection = function(selection) {
   if (ep.opened) {
     alert(ep.lang.noSetSelection);
   } else {
@@ -447,7 +436,7 @@ self.setSelection = function(selection) {
   }
 }
 
-self.DWgetSelection = function(textArea) {
+ep.proxyDWgetSelection = function(textArea) {
   if (ep.opened) {
     alert(ep.lang.noGetSelection);
   } else {
@@ -455,7 +444,7 @@ self.DWgetSelection = function(textArea) {
   }
 };
 
-self.DWsetSelection = function(selection) {
+ep.proxyDWsetSelection = function(selection) {
   if (ep.opened) {
     alert(ep.lang.noSetSelection);
   } else {
@@ -463,7 +452,7 @@ self.DWsetSelection = function(selection) {
   }
 }
 
-self.pasteText = function (selection,text,opts) {
+ep.proxyPasteText = function (selection,text,opts) {
   if (typeof(text) == 'undefined') return;
 
   if (ep.opened) {
@@ -473,8 +462,7 @@ self.pasteText = function (selection,text,opts) {
   }
 }
 
-// needed
-self.insertTags = function(textAreaID, tagOpen, tagClose, sampleText) {
+ep.proxyInsertTags = function(textAreaID, tagOpen, tagClose, sampleText) {
   if (ep.opened) {
     ep.sendMessage('insertTags', {'tagOpen': tagOpen, 'tagClose' : tagClose, 'sampleText' : sampleText, 'trimSpaces' : false});
   } else {
@@ -482,8 +470,7 @@ self.insertTags = function(textAreaID, tagOpen, tagClose, sampleText) {
   }
 }
 
-// needed
-self.insertAtCarret = function(textAreaID, text) {
+ep.proxyInsertAtCarret = function(textAreaID, text) {
   if (ep.opened) {
     ep.sendMessage('insert', {'text': text});
   } else {
@@ -492,7 +479,7 @@ self.insertAtCarret = function(textAreaID, text) {
 }
 
 // needed
-self.tb_formatln = function(btn, props, edid) {
+ep.proxyTbFormatLn = function(btn, props, edid) {
   if (ep.opened) {
     var sample = props.title || props.sample;
 
@@ -510,7 +497,7 @@ self.tb_formatln = function(btn, props, edid) {
 }
 
 // needed
-dw_linkwiz.insertLink = function(title) {
+ep.proxyInsertLink = function(title) {
   if (ep.opened) {
     var link = dw_linkwiz.$entry.val();
     if(!link) {
@@ -618,9 +605,6 @@ ep.initialize = function() {
   }
 };
 
-/* jQuery(document).ready(ep.initialize); */
-self.setTimeout(ep.initialize, 500);
-
 ep.iframeinsertReceiveMessage = function(event) {
   if (typeof(event.data) != 'object') {
     return;
@@ -637,5 +621,31 @@ ep.iframeinsertReceiveMessage = function(event) {
   }
 }
 
-window.addEventListener("message", ep.iframeinsertReceiveMessage, false);
+
+window.addEventListener('DOMContentLoaded', (event) => {
+  /* textselection / toolbar wrapper */
+  ep.setSelection = self.setSelection;
+  ep.getSelection = self.getSelection;
+  ep.DWsetSelection = self.DWsetSelection;
+  ep.DWgetSelection = self.DWgetSelection;
+  ep.pasteText = self.pasteText;
+  ep.insertTags = self.insertTags;
+  ep.insertAtCarret = self.insertAtCarret;
+  ep.tb_formatln = self.tb_formatln;
+  ep.insertLink = dw_linkwiz.insertLink;
+
+  self.getSelection = ep.proxyGetSelection;
+  self.setSelection = ep.proxySetSelection;
+  self.DWgetSelection = ep.proxyDWgetSelection;
+  self.DWsetSelection = ep.proxyDWsetSelection;
+  self.pasteText = ep.proxyPasteText;
+  self.insertTags = ep.proxyInsertTags;
+  self.insertAtCarret = ep.proxyInsertAtCarret;
+  self.tb_formatln = ep.proxyTbFormatLn;
+  dw_linkwiz.insertLink = ep.proxyInsertLink;
+
+  self.setTimeout(ep.initialize, 500);
+
+  window.addEventListener("message", ep.iframeinsertReceiveMessage, false);
+});
 
