@@ -198,9 +198,8 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             $canPassword = false;
         }
 
-        $hasPassword = (bool) ($this->ep_instance->isPasswordProtected($pageid)->isPasswordProtected);
-        $ret = Array("hasPassword" => $hasPassword, "canPassword" => $canPassword, "encpw" => ($hasPassword ? "***" : ""));
-        $ret["encMode"] = $meta[$rev]["encMode"];
+        // 2021-02-02: disable password functionality as dropped from etherpad lite, see https://github.com/michael-dev/dokuwikietherpadlite/issues/22
+        $ret = Array("canPassword" => $canPassword);
         $ret["encAMode"] = $meta[$rev]["encAMode"];
         $ret["readMode"] = $meta[$rev]["readMode"];
         $ret["writeMode"] = "wikiwrite";
@@ -246,27 +245,13 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
         if (!isset($meta[$rev])) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
         if ($meta[$rev]["owner"] != $this->client) return Array("file" => __FILE__, "line" => __LINE__, "error" => $this->getLang("Permission denied"));
 
-        if ($_POST["encMode"] == "noenc") {
-          $_POST["encpw"] = "";
-          if (strpos($_POST["readMode"],"password") === false)
-            $_POST["readpw"] = "";
-          if (strpos($_POST["writeMode"],"password") === false)
-            $_POST["writepw"] = "";
-          $_POST["readMode"] = str_replace("+password","",$_POST["readMode"]);
-        } else {
-          $_POST["encMode"] = "enc";
+        if (strpos($_POST["readMode"],"password") === false)
           $_POST["readpw"] = "";
+        if (strpos($_POST["writeMode"],"password") === false)
           $_POST["writepw"] = "";
-          $_POST["readMode"] = $_POST["encAMode"];
-        }
+        $_POST["readMode"] = str_replace("+password","",$_POST["readMode"]);
 
         $this->renameCurrentPage();
-
-        $password = $_POST["encpw"];
-        if ($password != "***") {
-          if ($password == "") $password = NULL;
-          $this->ep_instance->setPassword($pageid, $password);
-        }
 
         $password = $_POST["readpw"];
         if ($password != "***") {
@@ -286,7 +271,6 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
           }
         }
 
-        $meta[$rev]["encMode"] = $_POST["encMode"];
         $meta[$rev]["encAMode"] = $_POST["encAMode"];
         $meta[$rev]["readMode"] = $_POST["readMode"];
 
@@ -386,7 +370,6 @@ class action_plugin_etherpadlite_etherpadlite extends DokuWiki_Action_Plugin {
             $meta[$rev] = Array();
             $meta[$rev]["pageid"] = $pageid;
             $meta[$rev]["owner"] = $this->client;
-            $meta[$rev]["encMode"] = "noenc";
             $meta[$rev]["encAMode"] = "wikiwrite";
             $meta[$rev]["readMode"] = "wikiwrite";
 

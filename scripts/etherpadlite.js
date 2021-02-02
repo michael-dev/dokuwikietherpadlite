@@ -133,18 +133,11 @@ ep.init_security = function() {
   ep.dlg = {};
   ep.dlg.dlg = jQuery('<div/>').attr('title',ep.lang.securitymanager);
   ep.dlg.frm = jQuery('<form/>').addClass('pad-form').submit(ep.on_security_submit).appendTo(ep.dlg.dlg);
-  var encLabel = jQuery('<label/>').attr('for','encMode').text(ep.lang.encryption+':');
-  ep.dlg.encMode = jQuery('<select/>').attr('name','encMode').attr('size',1).change(ep.on_security_encmode_changed);
-   ep.dlg.encMode.append(jQuery('<option/>').val('enc').text(ep.lang.padIsEncrypted));
-   ep.dlg.encMode.append(jQuery('<option/>').val('noenc').text(ep.lang.padIsUnencrypted));
-  ep.dlg.encPassword = jQuery('<span/>').show();
   var encALabel = jQuery('<label/>').attr('for','encAccessMode').text(ep.lang.accessRequires+':');
   ep.dlg.encAMode = jQuery('<select/>').attr('name','encAccessMode').attr('size',1);
    ep.dlg.encAMode.append(jQuery('<option/>').val('wikiread').text(ep.lang.permToReadWiki));
    ep.dlg.encAMode.append(jQuery('<option/>').val('wikiwrite').text(ep.lang.permToWriteWiki));
-  jQuery('<label/>').attr('for','encpw').text(ep.lang.password+':').appendTo(ep.dlg.encPassword);
-  ep.dlg.encPasswordFrm = jQuery('<input/>').attr('name','encpw').attr('type','password').appendTo(ep.dlg.encPassword);
-
+  
   var readLabel = jQuery('<label/>').attr('for','readMode').text(ep.lang.readAccessRequires+':');
   ep.dlg.readMode = jQuery('<select/>').attr('name','readMode').attr('size',1).change(ep.on_security_readmode_changed);
    ep.dlg.readMode.append(jQuery('<option/>').val('wikiread').text(ep.lang.permToReadWiki));
@@ -163,11 +156,7 @@ ep.init_security = function() {
   jQuery('<label/>').attr('for','writepw').text(ep.lang.writePassword+':').appendTo(ep.dlg.writePassword);
   ep.dlg.writePasswordFrm = jQuery('<input/>').attr('name','writepw').attr('type','password').appendTo(ep.dlg.writePassword);
 
-  ep.dlg.frm.append(encLabel).append(ep.dlg.encMode);
-  ep.dlg.enc = jQuery('<span/>').show();
-  ep.dlg.enc.append(encALabel).append(ep.dlg.encAMode).append(ep.dlg.encPassword);
-  ep.dlg.frm.append(ep.dlg.enc);
-  ep.dlg.noEnc = jQuery('<span/>').hide();
+  ep.dlg.noEnc = jQuery('<span/>').show();
   ep.dlg.noEnc.append(readLabel).append(ep.dlg.readMode).append(ep.dlg.readPassword);
   ep.dlg.noEnc.append(writeLabel).append(ep.dlg.writeMode).append(ep.dlg.writePassword);
   ep.dlg.frm.append(ep.dlg.noEnc);
@@ -175,11 +164,9 @@ ep.init_security = function() {
   jQuery('<input/>').attr('type','submit').val(ep.lang.submit).click(ep.on_security_submit).appendTo(ep.dlg.frm);
   jQuery('<input/>').attr('type','reset').val(ep.lang.reset).click(ep.on_security_cancel).appendTo(ep.dlg.frm);
 
-  ep.dlg.encMode.val('noenc');
   ep.dlg.encAMode.val('wikiwrite');
   ep.dlg.readMode.val('wikiwrite');
   ep.dlg.writeMode.val('wikiwrite');
-  ep.dlg.encPasswordFrm.val('');
   ep.dlg.readPasswordFrm.val('');
   ep.dlg.writePasswordFrm.val('');
 
@@ -196,11 +183,9 @@ ep.on_security_submit = function() {
     DOKU_BASE + 'lib/exe/ajax.php',
     { 'id' : ep.config["id"], "rev" : ep.config["rev"], "call" : "pad_security",
       "sectok"     : jQuery('input[name=sectok]').val(),
-      "encMode"    : ep.dlg.encMode.val(),
       "encAMode"   : ep.dlg.encAMode.val(),
       "readMode"   : ep.dlg.readMode.val(),
       "writeMode"  : ep.dlg.writeMode.val(),
-      "encpw"      : ep.dlg.encPasswordFrm.val(),
       "readpw"     : ep.dlg.readPasswordFrm.val(),
       "writepw"    : ep.dlg.writePasswordFrm.val(),
       "isSaveable" : ep.isSaveable,
@@ -226,26 +211,17 @@ ep.security_fill = function(data) {
     jQuery('.pad-security').show();
   }
 
-  ep.dlg.encMode.val(data.encMode);
   ep.dlg.encAMode.val(data.encAMode);
   ep.dlg.readMode.val(data.readMode);
   ep.dlg.writeMode.val(data.writeMode);
-  if (data.hasPassword) {
-    ep.dlg.encPasswordFrm.val('');
-  } else {
-    ep.dlg.encPasswordFrm.val('***');
-  }
   ep.dlg.readPasswordFrm.val(data.readpw);
   ep.dlg.writePasswordFrm.val(data.writepw);
   ep.readOnly = data.isReadonly;
 
-  ep.on_security_encmode_changed();
   ep.on_security_readmode_changed();
   ep.on_security_writemode_changed();
 
-  if (data.encMode == "enc") {
-    jQuery(".pad-security").attr("src",ep.imgBase+"lock.png");
-  } else if (ep.dlg.writePasswordFrm.val() != "") {
+  if (ep.dlg.writePasswordFrm.val() != "") {
     jQuery(".pad-security").attr("src",ep.imgBase+"lock2.png");
   } else if (ep.dlg.readPasswordFrm.val() != "") {
     jQuery(".pad-security").attr("src",ep.imgBase+"lock1.png");
@@ -276,16 +252,6 @@ ep.refresh = function() {
       }
     );
 };
-
-ep.on_security_encmode_changed = function() {
-  if (ep.dlg.encMode.val() == "enc") {
-    ep.dlg.enc.show();
-    ep.dlg.noEnc.hide();
-  } else {
-    ep.dlg.enc.hide();
-    ep.dlg.noEnc.show();
-  }
-}
 
 ep.on_security_writemode_changed = function() {
   if(ep.dlg.writeMode.val().indexOf('password') == -1) {
